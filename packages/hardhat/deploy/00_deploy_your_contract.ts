@@ -26,13 +26,7 @@ const deployYourContract: DeployFunction = async function (hre: HardhatRuntimeEn
   await deploy("Lottery", {
     from: deployer,
     // Contract constructor arguments
-    args: [
-      "Group7LotteryToken",
-      "G7T",
-      10000n,
-      parseEther('0.0001'),
-      parseEther("0.00002")
-    ],
+    args: ["Group7LotteryToken", "G7T", 10000n, parseEther('0.0001'), parseEther("0.00002")],
     log: true,
     // autoMine: can be passed to the deploy function to make the deployment process faster on local networks by
     // automatically mining the contract deployment transaction. There is no effect on live networks.
@@ -41,7 +35,7 @@ const deployYourContract: DeployFunction = async function (hre: HardhatRuntimeEn
 
   // Get the deployed contract to interact with it after deploying.
   const lotteryContract = await hre.ethers.getContract<Contract>("Lottery", deployer);
-  console.log("Lottery Contract address:", await lotteryContract.getAddress())
+  console.log("Lottery Contract address:", await lotteryContract.getAddress());
   console.log("Lottery Token address:", await lotteryContract.paymentToken());
 };
 
