@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { Contract, parseEther } from "ethers";
-import { parse } from "dotenv";
+// import { parse } from "dotenv";
 
 /**
  * Deploys a contract named "YourContract" using the deployer account and
