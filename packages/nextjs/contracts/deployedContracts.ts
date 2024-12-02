@@ -161,6 +161,25 @@ const deployedContracts = {
           type: "function",
         },
         {
+          inputs: [
+            {
+              internalType: "address",
+              name: "account",
+              type: "address",
+            },
+          ],
+          name: "getBalance",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "balance",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
           inputs: [],
           name: "getRandomNumber",
           outputs: [
@@ -346,7 +365,7 @@ const deployedContracts = {
   },
   11155111: {
     Lottery: {
-      address: "0xdB6Fee2827292Cb4C64Ad5b0C8D2afa3adb0d4fE",
+      address: "0x489E9642D8df772A942B75669Ae149aC42B10e4D",
       abi: [
         {
           inputs: [
@@ -497,6 +516,25 @@ const deployedContracts = {
           name: "closeLottery",
           outputs: [],
           stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "account",
+              type: "address",
+            },
+          ],
+          name: "getBalance",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "balance",
+              type: "uint256",
+            },
+          ],
+          stateMutability: "view",
           type: "function",
         },
         {

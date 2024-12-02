@@ -1,5 +1,5 @@
+import { Sepolia } from "./public/Sepolia";
 import * as chains from "viem/chains";
-import {Sepolia} from "./public/Sepolia";
 
 export type ScaffoldConfig = {
   targetNetworks: readonly chains.Chain[];

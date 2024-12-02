@@ -1,71 +1,193 @@
 "use client";
 
-import Link from "next/link";
-import type { NextPage } from "next";
+import { useEffect, useState } from "react";
+import { parseEther } from "viem";
 import { useAccount } from "wagmi";
-import { BugAntIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import { Address } from "~~/components/scaffold-eth";
+import { useBlockNumber } from "wagmi";
+import { useScaffoldReadContract, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 
-const Home: NextPage = () => {
-  const { address: connectedAddress } = useAccount();
+const Home = () => {
+  const { address, isConnected } = useAccount();
+  const currentBlock = useBlockNumber();
+  const timestamp = BigInt(currentBlock?.data ?? 0);
+  const [lotteryStatus, setLotteryStatus] = useState<boolean>(false);
+  const [closingTime, setClosingTime] = useState<Date | null>(null);
+  const [userTokens, setUserTokens] = useState<any>("0");
+  const [prize, setPrize] = useState<string>("0");
+
+  // Read: Check if bets are open
+  const { data: betsOpen } = useScaffoldReadContract({
+    contractName: "Lottery",
+    functionName: "betsOpen",
+  });
+
+  // Read: Get bets closing time
+  const { data: betsClosingTime } = useScaffoldReadContract({
+    contractName: "Lottery",
+    functionName: "betsClosingTime",
+  });
+
+  // Read: User's token balance
+  const { data: tokenBalance } = useScaffoldReadContract({
+    contractName: "Lottery",
+    functionName: "getBalance",
+    args: [address],
+  });
+
+  // Read: User's prize balance
+  const { data: userPrize } = useScaffoldReadContract({
+    contractName: "Lottery",
+    functionName: "prize",
+    args: [address],
+  });
+
+  // Read: Contract owner
+  const { data: owner } = useScaffoldReadContract({
+    contractName: "Lottery",
+    functionName: "owner",
+  });
+
+  // Write: Purchase Tokens
+  const { writeContractAsync: writeYourContractAsync } = useScaffoldWriteContract("Lottery");
+
+  // Effect: Update state based on read results
+  useEffect(() => {
+    if (isConnected) {
+      setLotteryStatus(!!betsOpen);
+      setClosingTime(betsClosingTime ? new Date(Number(betsClosingTime) * 1000) : null);
+      setUserTokens(tokenBalance ? tokenBalance.toString() : "0");
+      setPrize(userPrize ? userPrize.toString() : "0");
+    }
+  }, [betsOpen, betsClosingTime, tokenBalance, userPrize, isConnected, address]);
 
   return (
-    <>
-      <div className="flex items-center flex-col flex-grow pt-10">
-        <div className="px-5">
-          <h1 className="text-center">
-            <span className="block text-2xl mb-2">Welcome to</span>
-            <span className="block text-4xl font-bold">Scaffold-ETH 2</span>
-          </h1>
-          <div className="flex justify-center items-center space-x-2 flex-col sm:flex-row">
-            <p className="my-2 font-medium">Connected Address:</p>
-            <Address address={connectedAddress} />
-          </div>
+    <div className="container mx-auto py-8">
+      {/* Wallet Connection */}
 
-          <p className="text-center text-lg">
-            Get started by editing{" "}
-            <code className="italic bg-base-300 text-base font-bold max-w-full break-words break-all inline-block">
-              packages/nextjs/app/page.tsx
-            </code>
-          </p>
-          <p className="text-center text-lg">
-            Edit your smart contract{" "}
-            <code className="italic bg-base-300 text-base font-bold max-w-full break-words break-all inline-block">
-              YourContract.sol
-            </code>{" "}
-            in{" "}
-            <code className="italic bg-base-300 text-base font-bold max-w-full break-words break-all inline-block">
-              packages/hardhat/contracts
-            </code>
-          </p>
-        </div>
+      {/* Lottery Info */}
 
-        <div className="flex-grow bg-base-300 w-full mt-16 px-8 py-12">
-          <div className="flex justify-center items-center gap-12 flex-col sm:flex-row">
-            <div className="flex flex-col bg-base-100 px-10 py-10 text-center items-center max-w-xs rounded-3xl">
-              <BugAntIcon className="h-8 w-8 fill-secondary" />
-              <p>
-                Tinker with your smart contract using the{" "}
-                <Link href="/debug" passHref className="link">
-                  Debug Contracts
-                </Link>{" "}
-                tab.
-              </p>
-            </div>
-            <div className="flex flex-col bg-base-100 px-10 py-10 text-center items-center max-w-xs rounded-3xl">
-              <MagnifyingGlassIcon className="h-8 w-8 fill-secondary" />
-              <p>
-                Explore your local transactions with the{" "}
-                <Link href="/blockexplorer" passHref className="link">
-                  Block Explorer
-                </Link>{" "}
-                tab.
-              </p>
-            </div>
-          </div>
-        </div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold mb-2">Lottery Information</h1>
+        <p>
+          Status: <strong>{lotteryStatus ? "Open" : "Closed"}</strong>
+        </p>
+        {closingTime && (
+          <p>
+            Closing Time: <strong>{closingTime.toLocaleString()}</strong>
+          </p>
+        )}
+        <p>
+          Your Tokens: <strong>{userTokens / 10 ** 18}</strong>
+        </p>
+        <p>
+          Your Prize: <strong>{prize} Tokens</strong>
+        </p>
       </div>
-    </>
+
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-2">Your Actions</h2>
+        <button
+          className="btn btn-primary mb-2"
+          onClick={async () => {
+            try {
+              await writeYourContractAsync({
+                functionName: "purchaseTokens",
+                args: undefined,
+                value: parseEther("0.01"), // Send 1 ETH
+              });
+            } catch (e) {
+              console.error("Error purchasing tokens:", e);
+            }
+          }}
+        >
+          Buy 100 Token (0.01 ETH)
+        </button>
+        <button
+          className="btn btn-primary mb-2"
+          onClick={async () => {
+            try {
+              await writeYourContractAsync({
+                functionName: "betMany",
+                args: [100n], // Number of bets
+              });
+            } catch (e) {
+              console.error("Error placing bet:", e);
+            }
+          }}
+        >
+          Place 1 Bet
+        </button>
+        <button
+          className="btn btn-primary mb-2"
+          onClick={async () => {
+            try {
+              await writeYourContractAsync({
+                functionName: "prizeWithdraw",
+                args: [BigInt(prize)],
+              });
+            } catch (e) {
+              console.error("Error claiming prize:", e);
+            }
+          }}
+        >
+          Claim Prize
+        </button>
+        <button
+          className="btn btn-primary"
+          onClick={async () => {
+            try {
+              await writeYourContractAsync({
+                functionName: "returnTokens",
+                args: [1000000000000000000n], // 1 token in wei
+              });
+            } catch (e) {
+              console.error("Error burning tokens:", e);
+            }
+          }}
+        >
+          Burn 1 Token
+        </button>
+      </div>
+
+      {/* Owner Actions */}
+
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-2">Owner Actions</h2>
+        <button
+          className="btn btn-secondary mb-2"
+          onClick={async () => {
+            try {
+              const currentTimestamp = Math.floor(Date.now() / 1000); // Get current time in seconds
+              const closingTime = currentTimestamp + 3600; // Open for 1 hour (3600 seconds)
+
+              await writeYourContractAsync({
+                functionName: "openBets",
+                args: [BigInt(closingTime)], // Use the calculated closingTime
+              });
+            } catch (e) {
+              console.error("Error opening bets:", e);
+            }
+          }}
+        >
+          Open Bets for 1 Hour
+        </button>
+
+        <button
+          className="btn btn-secondary"
+          onClick={async () => {
+            try {
+              await writeYourContractAsync({
+                functionName: "closeLottery",
+              });
+            } catch (e) {
+              console.error("Error closing lottery:", e);
+            }
+          }}
+        >
+          Close Lottery
+        </button>
+      </div>
+    </div>
   );
 };
 
