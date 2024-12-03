@@ -145,7 +145,7 @@ contract Lottery is Ownable {
     }
 
     function approveAllowance(address spender, uint256 amount) external{
-        paymentToken.approve(spender, amount)
+        paymentToken.approve(spender, amount);
     }
 
 }
