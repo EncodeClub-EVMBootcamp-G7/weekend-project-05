@@ -3,18 +3,15 @@
 import { useEffect, useState } from "react";
 import { parseEther } from "viem";
 import { useAccount } from "wagmi";
-import { useBlockNumber } from "wagmi";
 import { useScaffoldReadContract, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 
 const Home = () => {
   const { address, isConnected } = useAccount();
-  const currentBlock = useBlockNumber();
-  const timestamp = BigInt(currentBlock?.data ?? 0);
   const [lotteryStatus, setLotteryStatus] = useState<boolean>(false);
   const [closingTime, setClosingTime] = useState<Date | null>(null);
   const [userTokens, setUserTokens] = useState<any>("0");
   const [prize, setPrize] = useState<string>("0");
-
+  const MAXUINT256 = 115792089237316195423570985008687907853269984665640564039457584007913129639935n;
   // Read: Check if bets are open
   const { data: betsOpen } = useScaffoldReadContract({
     contractName: "Lottery",
@@ -41,15 +38,9 @@ const Home = () => {
     args: [address],
   });
 
-  // Read: Contract owner
-  const { data: owner } = useScaffoldReadContract({
-    contractName: "Lottery",
-    functionName: "owner",
-  });
-
   // Write: Purchase Tokens
   const { writeContractAsync: writeYourContractAsync } = useScaffoldWriteContract("Lottery");
-
+  const { writeContractAsync: writeYourContractAsync2 } = useScaffoldWriteContract("LotteryToken");
   // Effect: Update state based on read results
   useEffect(() => {
     if (isConnected) {
@@ -108,7 +99,7 @@ const Home = () => {
             try {
               await writeYourContractAsync({
                 functionName: "betMany",
-                args: [100n], // Number of bets
+                args: [10000n], // Number of bets
               });
             } catch (e) {
               console.error("Error placing bet:", e);
@@ -116,6 +107,21 @@ const Home = () => {
           }}
         >
           Place 1 Bet
+        </button>
+        <button
+          className="btn btn-primary mb-2"
+          onClick={async () => {
+            try {
+              await writeYourContractAsync2({
+                functionName: "approve",
+                args: ["0x489E9642D8df772A942B75669Ae149aC42B10e4D", MAXUINT256],
+              });
+            } catch (e) {
+              console.error("Error APPROVING:", e);
+            }
+          }}
+        >
+          Approve
         </button>
         <button
           className="btn btn-primary mb-2"
