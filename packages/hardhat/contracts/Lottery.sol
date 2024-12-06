@@ -139,6 +139,7 @@ contract Lottery is Ownable {
         paymentToken.burnFrom(msg.sender, amount);
         payable(msg.sender).transfer(amount / purchaseRatio);
     }
+
     function getBalance(address account)public view returns(uint256 balance) {
         balance = paymentToken.balanceOf(account);
     }
